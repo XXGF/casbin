@@ -36,25 +36,58 @@ import (
 )
 
 // Enforcer is the main interface for authorization enforcement and policy management.
-type Enforcer struct {
-	modelPath string
-	model     model.Model
-	fm        model.FunctionMap
-	eft       effector.Effector
+/*
+在 Casbin 中，Enforcer 接口提供了一组方法，用于执行访问控制决策、管理策略规则和角色等操作。它是 Casbin 的核心组件，用于实现访问控制的功能。
 
-	adapter    persist.Adapter
-	watcher    persist.Watcher
+通过 Enforcer 接口，您可以执行以下操作：
+
+授权决策（Authorization Decision）：使用 Enforce 方法来判断是否允许或拒绝某个请求的访问。该方法会根据已定义的策略规则和角色进行访问控制决策。
+
+策略管理（Policy Management）：使用 AddPolicy、RemovePolicy、RemoveFilteredPolicy 等方法来管理策略规则。您可以添加、删除或查询策略规则，以便动态调整访问控制策略。
+
+角色管理（Role Management）：使用 AddRoleForUser、DeleteRoleForUser、GetRolesForUser 等方法来管理角色。您可以为用户分配角色、删除用户的角色，或查询用户所拥有的角色。
+
+模型管理（Model Management）：使用 SetModel 方法来设置访问控制模型。您可以定义请求、策略、角色等模型的组成部分，以满足特定的访问控制需求。
+
+策略持久化（Policy Persistence）：使用 SavePolicy、LoadPolicy 等方法来将策略规则持久化到存储介质（如文件、数据库）或从存储介质加载策略规则。
+
+Enforcer 接口提供了许多其他方法，用于更精细的控制和管理访问控制策略。具体的方法和用法可能因 Casbin 库和所使用的编程语言而有所不同。
+*/
+type Enforcer struct {
+	// 模型文件的路径，表示访问控制模型的配置文件路径。
+	modelPath string
+	// 访问控制模型，表示整个访问控制模型的结构和组成部分。
+	model model.Model
+	// 函数映射，用于注册和管理自定义函数，以供策略规则中使用。
+	fm model.FunctionMap
+	// 效果器（Effector），用于计算多个策略规则的整体效果。
+	eft effector.Effector
+
+	// 持久化适配器（Adapter），用于将策略规则持久化到存储介质或从存储介质加载策略规则。
+	adapter persist.Adapter
+	// 持久化观察者（Watcher），用于监视策略规则的变化。
+	watcher persist.Watcher
+	// 持久化调度器（Dispatcher），用于在策略规则变化时触发相应的操作。
 	dispatcher persist.Dispatcher
-	rmMap      map[string]rbac.RoleManager
+	// 角色管理器（Role Manager）映射，用于管理不同角色的角色管理器实例。
+	rmMap map[string]rbac.RoleManager
+	// 匹配器（Matcher）映射，用于缓存和管理匹配器实例。
 	matcherMap sync.Map
 
-	enabled              bool
-	autoSave             bool
-	autoBuildRoleLinks   bool
-	autoNotifyWatcher    bool
+	// enabled：是否启用访问控制功能。
+	enabled bool
+	// autoSave：是否自动保存策略规则到持久化适配器。
+	autoSave bool
+	// autoBuildRoleLinks：是否自动构建角色关联。
+	autoBuildRoleLinks bool
+	// autoNotifyWatcher：是否自动通知持久化观察者。
+	autoNotifyWatcher bool
+	// autoNotifyDispatcher：是否自动通知持久化调度器。
 	autoNotifyDispatcher bool
-	acceptJsonRequest    bool
+	// acceptJsonRequest：是否接受 JSON 格式的请求。
+	acceptJsonRequest bool
 
+	// logger：日志记录器，用于记录 Enforcer 相关的日志信息。
 	logger log.Logger
 }
 
@@ -325,11 +358,12 @@ func (e *Enforcer) LoadPolicy() error {
 			}
 		}
 	}()
-
+	// 1. 将adapter对应的策略，加载到model中。
+	// 主要有两种策略：1. 哪些用户有哪些角色[g]、2. 哪些角色有哪些资源的那些操作[p]
 	if err = e.adapter.LoadPolicy(newModel); err != nil && err.Error() != "invalid file path, file path cannot be empty" {
 		return err
 	}
-
+	// 2.
 	if err = newModel.SortPoliciesBySubjectHierarchy(); err != nil {
 		return err
 	}
@@ -524,15 +558,20 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 			err = fmt.Errorf("panic: %v\n%s", r, debug.Stack())
 		}
 	}()
-
+	// 1. 没有开启访问控制，直接返回true
 	if !e.enabled {
 		return true, nil
 	}
-
+	// 2. 获取已有的 function map，key 是 函数名，val是具体函数
 	functions := e.fm.GetFunctions()
+	// 3. 如果 model 中配置了 g，也就是：[role_definition]
+	// 为 [role_definition] 自动生成一个 g 函数，对应的 m = g(r.sub, p.sub, r.dom)
 	if _, ok := e.model["g"]; ok {
 		for key, ast := range e.model["g"] {
+			// rm 是role管理器或domain管理器
 			rm := ast.RM
+			// 为 [role_definition] 自动生成一个 g 函数，对应的 m = g(r.sub, p.sub, r.dom)
+			// 这里自定生成的 g 函数，会覆盖代码里手动添加的g函数【如果有添加的话】
 			functions[key] = util.GenerateGFunction(rm)
 		}
 	}
@@ -543,6 +582,7 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 		eType = "e"
 		mType = "m"
 	)
+	// 4. 对EnforceContext进行处理
 	if len(rvals) != 0 {
 		switch rvals[0].(type) {
 		case EnforceContext:
@@ -556,36 +596,42 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 			break
 		}
 	}
-
+	// 获取 [matchers] 的表达式
 	var expString string
 	if matcher == "" {
 		expString = e.model["m"][mType].Value
 	} else {
 		expString = util.RemoveComments(util.EscapeAssertion(matcher))
 	}
-
+	// 5. 获取请求占位符，即[request_definition]的值
 	rTokens := make(map[string]int, len(e.model["r"][rType].Tokens))
 	for i, token := range e.model["r"][rType].Tokens {
 		rTokens[token] = i
 	}
+	// 6. 获取Policy占位符，即[policy_definition]的值
 	pTokens := make(map[string]int, len(e.model["p"][pType].Tokens))
 	for i, token := range e.model["p"][pType].Tokens {
 		pTokens[token] = i
 	}
-
+	// 7. 是否支持json请求
 	if e.acceptJsonRequest {
 		expString = requestJsonReplace(expString, rTokens, rvals)
 	}
-
+	// 8. 组合数据
 	parameters := enforceParameters{
+		// 请求的占位符
 		rTokens: rTokens,
-		rVals:   rvals,
-
+		// 请求参数
+		rVals: rvals,
+		// Policy的占位符
 		pTokens: pTokens,
 	}
-
+	// 9. 判断 [matcher] 中的表达式是否包含 Eval 函数
+	// Eval函数是Casbin中的一个内置函数，用于在策略规则中执行自定义的表达式逻辑。它允许用户在策略规则中使用更复杂的条件判断和逻辑运算。
+	// 通过调用util.HasEval(expString)函数，可以在Casbin中判断策略规则中是否使用了Eval函数，以便在需要时执行自定义的表达式逻辑。
 	hasEval := util.HasEval(expString)
 	if hasEval {
+		// 如果 [matcher] 表达式中配置了 eval 函数，则这里要生成 eval 函数
 		functions["eval"] = generateEvalFunction(functions, &parameters)
 	}
 	var expression *govaluate.EvaluableExpression
@@ -602,7 +648,10 @@ func (e *Enforcer) enforce(matcher string, explains *[]string, rvals ...interfac
 			rvals)
 	}
 
+	// 用于存储每条Policy的结果，结果可以是：允许（Allow）、拒绝（Deny）或未知（Indeterminate）
 	var policyEffects []effector.Effect
+	// 用于存储匹配器（Matcher）的结果。
+	// Matcher是Casbin中用于匹配策略规则的组件，它根据请求的属性和策略规则进行匹配，并生成一个匹配结果。
 	var matcherResults []float64
 
 	var effect effector.Effect
@@ -845,11 +894,14 @@ func (e *Enforcer) AddNamedDomainMatchingFunc(ptype, name string, fn rbac.Matchi
 
 // assumes bounds have already been checked
 type enforceParameters struct {
+	// 存储请求的占位符
 	rTokens map[string]int
-	rVals   []interface{}
-
+	// 存储具体的请求值
+	rVals []interface{}
+	// 存储Policy的占位符
 	pTokens map[string]int
-	pVals   []string
+	// 存储具体的Policy
+	pVals []string
 }
 
 // implements govaluate.Parameters

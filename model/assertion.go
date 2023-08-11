@@ -25,12 +25,19 @@ import (
 // Assertion represents an expression in a section of the model.
 // For example: r = sub, obj, act
 type Assertion struct {
-	Key           string
-	Value         string
-	Tokens        []string
-	Policy        [][]string
-	PolicyMap     map[string]int
-	RM            rbac.RoleManager
+	// 断言的键，表示断言的类型或标识符。例如：r
+	Key string
+	// 断言的键，表示断言的类型或标识符。例如：sub, dom, obj, act
+	Value string
+	// 断言的标记列表，表示断言值的分解结果，用于进一步处理和解析。 例如：[r_sub, r_dom, r_obj, r_act]
+	Tokens []string
+	// 策略规则的二维字符串数组，表示断言的策略定义。每个策略规则是一个字符串数组，包含多个字段。
+	Policy [][]string
+	// 策略规则的映射，用于快速查找策略规则的索引。
+	PolicyMap map[string]int
+	// 角色管理器（Role Manager），用于处理角色相关的操作和查询。
+	RM rbac.RoleManager
+	// 字段索引映射，用于快速查找字段的索引。
 	FieldIndexMap map[string]int
 
 	logger log.Logger

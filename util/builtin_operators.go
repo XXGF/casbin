@@ -273,7 +273,7 @@ func KeyMatch4Func(args ...interface{}) (interface{}, error) {
 }
 
 // KeyMatch5 determines whether key1 matches the pattern of key2 (similar to RESTful path), key2 can contain a *
-// For example, 
+// For example,
 // - "/foo/bar?status=1&type=2" matches "/foo/bar"
 // - "/parent/child1" and "/parent/child1" matches "/parent/*"
 // - "/parent/child1?status=1" matches "/parent/*"
@@ -378,6 +378,7 @@ func GlobMatchFunc(args ...interface{}) (interface{}, error) {
 // GenerateGFunction is the factory method of the g(_, _[, _]) function.
 func GenerateGFunction(rm rbac.RoleManager) govaluate.ExpressionFunction {
 	memorized := sync.Map{}
+	// 自动生成的 g 函数的逻辑
 	return func(args ...interface{}) (interface{}, error) {
 		// Like all our other govaluate functions, all args are strings.
 
@@ -403,12 +404,17 @@ func GenerateGFunction(rm rbac.RoleManager) govaluate.ExpressionFunction {
 
 		// If not, do the calculation.
 		// There are guaranteed to be exactly 2 or 3 arguments.
+		// 1. g 函数的主要逻辑
 		name1, name2 := args[0].(string), args[1].(string)
 		if rm == nil {
+			// 1.1 如果没有配置domain，这里直接判断入参1[r.sub]和入参2[p.sub]是否相等。
+			// 即判断请求的用户和Policy的角色是否相等
 			v = name1 == name2
 		} else if len(args) == 2 {
+			// 1.2 rm 不为空，但是 g 函数只有两个入参
 			v, _ = rm.HasLink(name1, name2)
 		} else {
+			// 1.3 rm不为空，且 g函数 超过 3 个入参，第三个入参一定是domain【这是约定】
 			domain := args[2].(string)
 			v, _ = rm.HasLink(name1, name2, domain)
 		}

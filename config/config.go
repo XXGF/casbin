@@ -32,7 +32,7 @@ var (
 	DEFAULT_COMMENT = []byte{'#'}
 	// DEFAULT_COMMENT_SEM defines what alternate character(s) indicate a comment `;`
 	DEFAULT_COMMENT_SEM = []byte{';'}
-	// DEFAULT_MULTI_LINE_SEPARATOR defines what character indicates a multi-line content
+	// DEFAULT_MULTI_LINE_SEPARATOR defines what character indicates a multi_example-line content
 	DEFAULT_MULTI_LINE_SEPARATOR = []byte{'\\'}
 )
 
@@ -50,6 +50,13 @@ type ConfigInterface interface {
 // Config represents an implementation of the ConfigInterface
 type Config struct {
 	// Section:key=value
+	/*	示例：
+		{
+			"request_definition": {
+					"r": "sub, dom, obj, act",
+			}
+		}
+	*/
 	data map[string]map[string]string
 }
 

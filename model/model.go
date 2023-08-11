@@ -30,9 +30,33 @@ import (
 )
 
 // Model represents the whole access control model.
+/*
+	示例：
+	{
+		"r": {
+			"r": *Assertion
+		}
+	}
+*/
 type Model map[string]AssertionMap
 
 // AssertionMap is the collection of assertions, can be "r", "p", "g", "e", "m".
+/*
+AssertionMap是Casbin中的断言集合，可以包含 "r"、"p"、"g"、"e"、"m" 等类型的断言。
+
+在Casbin中，断言（Assertion）是指策略模型中的规则或声明。不同类型的断言用于定义不同的方面：
+
+"r" 表示请求（Request）断言，用于定义请求的属性，如主体（subject）、资源（object）、操作（action）等。
+"p" 表示策略（Policy）断言，用于定义访问控制策略，包括允许或拒绝访问的规则。
+"g" 表示角色（Grouping）断言，用于定义角色的层次结构和角色分配。
+"e" 表示策略效果（Effect）断言，用于定义多个策略规则的整体效果，如允许或拒绝。
+"m" 表示匹配器（Matcher）断言，用于定义策略规则的匹配条件。
+
+AssertionMap是一个集合，它包含了这些不同类型的断言。在Casbin中，可以通过访问 AssertionMap 的不同键来获取和操作相应类型的断言。
+例如，可以使用 AssertionMap["r"] 来获取请求断言（Request Assertion），使用 AssertionMap["p"] 来获取策略断言（Policy Assertion），以此类推。
+
+请注意，AssertionMap 是一个键值对集合，键是断言类型，值是相应类型的断言数据。具体的断言数据结构和格式取决于Casbin库和所使用的策略模型。
+*/
 type AssertionMap map[string]*Assertion
 
 const defaultDomain string = ""

@@ -44,6 +44,9 @@ func (model Model) BuildIncrementalRoleLinks(rmMap map[string]rbac.RoleManager, 
 }
 
 // BuildRoleLinks initializes the roles in RBAC.
+/*
+	这个函数给 g model 加了 RM，而且是 domain  的RM
+*/
 func (model Model) BuildRoleLinks(rmMap map[string]rbac.RoleManager) error {
 	model.PrintPolicy()
 	for ptype, ast := range model["g"] {
@@ -172,6 +175,7 @@ func (model Model) HasPolicies(sec string, ptype string, rules [][]string) bool 
 func (model Model) AddPolicy(sec string, ptype string, rule []string) {
 	assertion := model[sec][ptype]
 	assertion.Policy = append(assertion.Policy, rule)
+	// key 是策略，val是策略条数 -1
 	assertion.PolicyMap[strings.Join(rule, DefaultSep)] = len(model[sec][ptype].Policy) - 1
 
 	hasPriority := false
