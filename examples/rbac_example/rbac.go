@@ -47,10 +47,16 @@ func main() {
 	enforcer.LoadPolicy()
 
 	// 进行访问控制检查
-	requestSub := "admin"
-	requestDom := "domain1"
-	requestObj := "data1"
-	requestAct := "read"
+	//requestSub := "user_10000324"
+	//requestDom := "tenant_1"
+	//requestObj := "agent_3"
+	//requestAct := "agent_10001"
+
+	requestSub := "user_10000324"
+	requestDom := "tenant_1"
+	requestObj := "/adservice/list"
+	requestAct := "-"
+
 	result, _ := enforcer.Enforce(requestSub, requestDom, requestObj, requestAct)
 
 	fmt.Println(result) // 输出: true
