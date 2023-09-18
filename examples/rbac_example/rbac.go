@@ -31,31 +31,24 @@ func main() {
 	adapter := fileadapter.NewAdapter("./rbac_policy.csv")
 	enforcer, _ := casbin.NewEnforcer(m, adapter)
 
-	// 定义角色匹配器
-	//enforcer.AddFunction("g", func(args ...interface{}) (interface{}, error) {
-	//	requestSub := args[0].(string)
-	//	policySub := args[1].(string)
-	//	requestDom := args[2].(string)
-	//
-	//	// 自定义角色匹配逻辑
-	//	// 这里可以根据实际需求进行角色匹配的判断
-	//	// 返回 true 表示匹配成功，否则返回 false
-	//	return requestSub == policySub && requestDom == "domain1", nil
+	// 添加自定义函数
+	//enforcer.AddFunction("regexMatch1", func(args ...interface{}) (interface{}, error) {
+	//	return true, nil
 	//})
 
 	// 加载策略
 	enforcer.LoadPolicy()
 
 	// 进行访问控制检查
-	//requestSub := "user_10000324"
-	//requestDom := "tenant_1"
-	//requestObj := "agent_3"
-	//requestAct := "agent_10001"
-
 	requestSub := "user_10000324"
 	requestDom := "tenant_1"
-	requestObj := "/adservice/list"
-	requestAct := "-"
+	requestObj := "agent_3"
+	requestAct := "agent_10001"
+
+	//requestSub := "user_10000324"
+	//requestDom := "tenant_1"
+	//requestObj := "/adservice/list"
+	//requestAct := "-"
 
 	result, _ := enforcer.Enforce(requestSub, requestDom, requestObj, requestAct)
 
