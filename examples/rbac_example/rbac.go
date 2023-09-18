@@ -11,7 +11,7 @@ func main() {
 	// 定义Casbin模型
 	// 创建一个Casbin模型
 	m, _ := model.NewModelFromString(`
-		[request_definition]
+    [request_definition]
 	r = sub, dom, obj, act
 	
 	[policy_definition]
@@ -32,19 +32,23 @@ func main() {
 	enforcer, _ := casbin.NewEnforcer(m, adapter)
 
 	// 添加自定义函数
-	//enforcer.AddFunction("regexMatch1", func(args ...interface{}) (interface{}, error) {
-	//	return true, nil
-	//})
+	enforcer.AddFunction("regexMatch1", func(args ...interface{}) (interface{}, error) {
+		return true, nil
+		// 原来的逻辑
+		// true:
+	})
 
 	// 加载策略
 	enforcer.LoadPolicy()
 
 	// 进行访问控制检查
+	// 示例一
 	requestSub := "user_10000324"
 	requestDom := "tenant_1"
 	requestObj := "agent_3"
 	requestAct := "agent_10001"
 
+	// 示例二
 	//requestSub := "user_10000324"
 	//requestDom := "tenant_1"
 	//requestObj := "/adservice/list"

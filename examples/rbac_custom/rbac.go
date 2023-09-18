@@ -18,6 +18,7 @@ func main() {
 	PathMap["/a"] = struct{}{}
 	PathMap["/a/b"] = struct{}{}
 	PathMap["/a/b/c"] = struct{}{}
+
 	//pathMap["/a/b/c/d"] = struct{}{}
 
 	// 定义Casbin模型
