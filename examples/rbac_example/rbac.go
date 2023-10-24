@@ -31,28 +31,28 @@ func main() {
 	adapter := fileadapter.NewAdapter("./rbac_policy.csv")
 	enforcer, _ := casbin.NewEnforcer(m, adapter)
 
-	// 添加自定义函数
-	enforcer.AddFunction("regexMatch1", func(args ...interface{}) (interface{}, error) {
-		return true, nil
-		// 原来的逻辑
-		// true:
-	})
+	enforcer.EnableAutoSave(true)
+	r, err := enforcer.AddPermissionsForUser("user_10000324", []string{"tenant_1", "/adservice/xxx", "-"})
+	fmt.Println(r, err)
 
 	// 加载策略
 	enforcer.LoadPolicy()
 
 	// 进行访问控制检查
 	// 示例一
-	requestSub := "user_10000324"
-	requestDom := "tenant_1"
-	requestObj := "agent_3"
-	requestAct := "agent_10001"
-
-	// 示例二
 	//requestSub := "user_10000324"
 	//requestDom := "tenant_1"
-	//requestObj := "/adservice/list"
-	//requestAct := "-"
+	//requestObj := "agent_3"
+	//requestAct := "agent_10001"
+
+	// 示例二
+	requestSub := "user_10000324"
+	requestDom := "tenant_1"
+	requestObj := "/adservice/xxx"
+	requestAct := "-"
+
+	//list := enforcer.GetPermissionsForUserInDomain("user_10000324", "tenant_1")
+	//fmt.Println(list)
 
 	result, _ := enforcer.Enforce(requestSub, requestDom, requestObj, requestAct)
 
