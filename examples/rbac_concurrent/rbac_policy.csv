@@ -1,7 +1,3 @@
 p, role_16, tenant_1, /a/b/c, -
-p, role_16, tenant_1, /a/b, -
-p, role_16, tenant_1, /a, -
-
-p, user_10000324, tenant_1, agent_3, agent_10001
 
 g, user_10000324, role_16, tenant_1

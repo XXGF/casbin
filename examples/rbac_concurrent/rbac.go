@@ -31,7 +31,8 @@ func main() {
 
 	// 创建Casbin Enforcer
 	adapter := fileadapter.NewAdapter("./rbac_policy.csv")
-	enforcer, _ := casbin.NewEnforcer(m, adapter)
+	enforcer, _ := casbin.NewSyncedEnforcer(m, adapter)
+	//enforcer, _ := casbin.NewEnforcer(m, adapter)
 
 	// 加载策略
 	enforcer.LoadPolicy()
@@ -39,7 +40,7 @@ func main() {
 
 	// 定时从数据库中加载策略到内存中
 	go func() {
-		ticker := time.NewTicker(3 * time.Second)
+		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 		for {
 			<-ticker.C
@@ -87,10 +88,10 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for {
-				result, _ := enforcer.Enforce(requestSub, requestDom, requestObj, requestAct)
+				result, err := enforcer.Enforce(requestSub, requestDom, requestObj, requestAct)
 				//fmt.Println(result) // 输出: true
-				if !result {
-					fmt.Printf("%v %d --------------> false come out\nç", time.Now(), i)
+				if !result || err != nil {
+					fmt.Printf("%v %d --------------> false come out: result=%v, err=%v\n", time.Now(), i, result, err)
 				} else {
 					//fmt.Printf("%v %d true \nç", time.Now(), i)
 				}
